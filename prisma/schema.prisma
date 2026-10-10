@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum DeviceType {
+  LAPTOP
+  PHONE
+}
+
+enum ContactMethod {
+  PHONE_CALL
+  WHATSAPP
+  EMAIL
+}
+
+enum RepairStatus {
+  NEW
+  CONTACTED
+  IN_PROGRESS
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  role         Role     @default(ADMIN)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  statusChanges RepairStatusHistory[]
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String   @unique
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  repairRequests RepairRequest[]
+}
+
+model RepairRequest {
+  id               String        @id @default(cuid())
+  customerId       String
+  customer         Customer      @relation(fields: [customerId], references: [id])
+  deviceType       DeviceType
+  brandModel       String
+  problem          String
+  requestedService String
+  preferredContact ContactMethod
+  notes            String?
+  status           RepairStatus  @default(NEW)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  history RepairStatusHistory[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model RepairStatusHistory {
+  id              String        @id @default(cuid())
+  repairRequestId String
+  repairRequest   RepairRequest @relation(fields: [repairRequestId], references: [id], onDelete: Cascade)
+  status          RepairStatus
+  note            String?
+  changedById     String?
+  changedBy       User?         @relation(fields: [changedById], references: [id], onDelete: SetNull)
+  createdAt       DateTime      @default(now())
+
+  @@index([repairRequestId])
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  summary     String
+  description String
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ProductCategory {
+  id       String    @id @default(cuid())
+  name     String
+  slug     String    @unique
+  products Product[]
+}
+
+model Product {
+  id          String           @id @default(cuid())
+  name        String
+  description String?
+  imageUrl    String?
+  /// KES. null = "ask for price".
+  price       Decimal?         @db.Decimal(10, 2)
+  /// Only set when real stock is tracked. null = do not show availability.
+  inStock     Boolean?
+  /// Optional exact count; when set it decides availability.
+  quantity    Int?
+  active      Boolean          @default(true)
+  categoryId  String?
+  category    ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([categoryId])
+}
