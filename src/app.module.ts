@@ -7,6 +7,7 @@ import { AuthModule } from "./auth/auth.module";
 import { RepairRequestsModule } from "./repair-requests/repair-requests.module";
 import { ServicesModule } from "./services/services.module";
 import { ProductsModule } from "./products/products.module";
+import { CloudinaryModule } from "./cloudinary/cloudinary.module";
 import { AdminModule } from "./admin/admin.module";
 
 @Module({
@@ -18,6 +19,7 @@ import { AdminModule } from "./admin/admin.module";
     RepairRequestsModule,
     ServicesModule,
     ProductsModule,
+    CloudinaryModule,
     AdminModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
